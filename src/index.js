@@ -41,6 +41,28 @@ import { debounce } from 'debounce';
  */
 export default class Embed {
   /**
+   * data for Toolbox
+   *
+   * @returns {{icon: string, title: string}}
+   */
+  static get toolbox() {
+    return {
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M579.8 267.7c56.5-56.5 56.5-148 0-204.5c-50-50-128.8-56.5-186.3-15.4l-1.6 1.1c-14.4 10.3-17.7 30.3-7.4 44.6s30.3 17.7 44.6 7.4l1.6-1.1c32.1-22.9 76-19.3 103.8 8.6c31.5 31.5 31.5 82.5 0 114L422.3 334.8c-31.5 31.5-82.5 31.5-114 0c-27.9-27.9-31.5-71.8-8.6-103.8l1.1-1.6c10.3-14.4 6.9-34.4-7.4-44.6s-34.4-6.9-44.6 7.4l-1.1 1.6C206.5 251.2 213 330 263 380c56.5 56.5 148 56.5 204.5 0L579.8 267.7zM60.2 244.3c-56.5 56.5-56.5 148 0 204.5c50 50 128.8 56.5 186.3 15.4l1.6-1.1c14.4-10.3 17.7-30.3 7.4-44.6s-30.3-17.7-44.6-7.4l-1.6 1.1c-32.1 22.9-76 19.3-103.8-8.6C74 372 74 321 105.5 289.5L217.7 177.2c31.5-31.5 82.5-31.5 114 0c27.9 27.9 31.5 71.8 8.6 103.9l-1.1 1.6c-10.3 14.4-6.9 34.4 7.4 44.6s34.4 6.9 44.6-7.4l1.1-1.6C433.5 260.8 427 182 377 132c-56.5-56.5-148-56.5-204.5 0L60.2 244.3z"/></svg>',
+      title: 'Embed',
+    };
+  }
+
+  /**
+   * Allow pressing Enter inside the CodeTool textarea
+   *
+   * @returns {boolean}
+   * @public
+   */
+  static get enableLineBreaks() {
+    return true;
+  }
+
+  /**
    * @param {{data: EmbedData, config: EmbedConfig, api: object}}
    *   data — previously saved data
    *   config - user config for Tool
@@ -61,8 +83,7 @@ export default class Embed {
    * @param {RegExp} [data.regex] - pattern of source URLs
    * @param {string} [data.embedUrl] - URL scheme to embedded page. Use '<%= remote_id %>' to define a place to insert resource id
    * @param {string} [data.html] - iframe which contains embedded content
-   * @param {number} [data.height] - iframe height
-   * @param {number} [data.width] - iframe width
+   * @param {object} [data.style] - iframe style
    * @param {string} [data.caption] - caption
    */
   set data(data) {
@@ -70,15 +91,9 @@ export default class Embed {
       throw Error('Embed Tool data should be object');
     }
 
-    const { service, source, embed, width, height, caption = '' } = data;
-
     this._data = {
-      service: service || this.data.service,
-      source: source || this.data.source,
-      embed: embed || this.data.embed,
-      width: width || this.data.width,
-      height: height || this.data.height,
-      caption: caption || this.data.caption || '',
+      ...data,
+      caption: data.caption || this.data.caption || '',
     };
 
     const oldView = this.element;
@@ -93,9 +108,9 @@ export default class Embed {
    */
   get data() {
     if (this.element) {
-      const caption = this.element.querySelector(`.${this.api.styles.input}`);
+      const caption = this.element.querySelector('.embed-tool__caption');
 
-      this._data.caption = caption ? caption.innerHTML : '';
+      this._data.caption = caption ? caption.value : '';
     }
 
     return this._data;
@@ -116,6 +131,7 @@ export default class Embed {
       caption: 'embed-tool__caption',
       url: 'embed-tool__url',
       content: 'embed-tool__content',
+      error: 'embed-tool__error',
     };
   }
 
@@ -125,46 +141,168 @@ export default class Embed {
    * @returns {HTMLElement}
    */
   render() {
-    if (!this.data.service) {
-      const container = document.createElement('div');
+    const { source, service, embed, caption: _caption } = this.data;
 
-      this.element = container;
+    const container = this._createElement({
+      tagName: 'div',
+      classList: (service && embed) ? [this.CSS.baseClass, this.CSS.container, this.CSS.containerLoading] : [ this.CSS.baseClass ],
+    });
+    const input = this._createInput({
+      disabled: this.readOnly,
+      value: source || '',
+      placeholder: 'https://',
+      classList: !(service && embed) ? [this.CSS.input, this.CSS.error] : [ this.CSS.input ],
+    });
 
-      return container;
-    }
+    input.addEventListener('paste', (event) => {
+      const url = (event.clipboardData || window.clipboardData).getData('text');
 
-    const { html } = Embed.services[this.data.service];
-    const container = document.createElement('div');
-    const caption = document.createElement('div');
-    const template = document.createElement('template');
-    const preloader = this.createPreloader();
+      if (url) {
+        this._checkedUrl(url);
+      }
+    });
+    input.addEventListener('keydown', (event) => {
+      if (event.keyCode === 13) {
+        const url = event.target.value;
 
-    container.classList.add(this.CSS.baseClass, this.CSS.container, this.CSS.containerLoading);
-    caption.classList.add(this.CSS.input, this.CSS.caption);
+        if (url) {
+          this._checkedUrl(url);
+        }
+      }
+    });
 
-    container.appendChild(preloader);
+    container.appendChild(input);
 
-    caption.contentEditable = !this.readOnly;
-    caption.dataset.placeholder = this.api.i18n.t('Enter a caption');
-    caption.innerHTML = this.data.caption || '';
+    if (service && embed) {
+      const { html } = Embed.services[service];
 
-    template.innerHTML = html;
-    template.content.firstChild.setAttribute('src', this.data.embed);
-    template.content.firstChild.classList.add(this.CSS.content);
-
-    const embedIsReady = this.embedIsReady(container);
-
-    container.appendChild(template.content.firstChild);
-    container.appendChild(caption);
-
-    embedIsReady
-      .then(() => {
-        container.classList.remove(this.CSS.containerLoading);
+      const preloader = this.createPreloader();
+      const template = this._createElement({
+        tagName: 'template',
       });
+      const caption = this._createInput({
+        disabled: this.readOnly,
+        value: _caption || '',
+        placeholder: 'Enter a caption',
+        classList: [this.CSS.input, this.CSS.caption],
+      });
+
+      template.innerHTML = html;
+      template.content.firstChild.setAttribute('src', embed);
+      template.content.firstChild.classList.add(this.CSS.content);
+
+      this.embedIsReady(container)
+        .then(() => container.classList.remove(this.CSS.containerLoading));
+
+      container.appendChild(preloader);
+      container.appendChild(template.content.firstChild);
+      container.appendChild(caption);
+    }
 
     this.element = container;
 
     return container;
+  }
+
+  /**
+   *
+   */
+  updated() {
+    const [input, caption] = this.element.querySelectorAll('input');
+
+    if (input.value && !document.activeElement.contains(caption)) {
+      input.focus();
+      const value = input.value;
+
+      input.value = '';
+      input.value = value;
+    }
+  }
+
+  /**
+   * @param url
+   */
+  _checkedUrl(url) {
+    const _data = {
+      service: '',
+      source: url,
+      embed: '',
+      style: {},
+    };
+
+    Object.entries(Embed.patterns)
+      .some(([key, value]) => {
+        if (value.test(_data.source)) {
+          _data.service = key;
+
+          return true;
+        }
+
+        return false;
+      });
+
+    if (_data.service) {
+      const { regex, embedUrl, style, id = (ids) => ids.shift() } = Embed.services[_data.service];
+      const result = regex.exec(_data.source).slice(1);
+
+      _data.embed = embedUrl.replace(/<%= remote_id %>/g, id(result));
+      _data.style = style;
+    }
+
+    this.data = _data;
+  }
+
+  /**
+   * @param root0
+   * @param root0.tagName
+   * @param root0.classList
+   *
+   * @returns {HTMLElement}
+   */
+  _createElement({
+    tagName,
+    classList,
+  }) {
+    const element = document.createElement(tagName);
+
+    if (classList && classList.length > 0) {
+      classList.forEach(list => {
+        element.classList.add(list);
+      });
+    }
+
+    return element;
+  }
+
+  /**
+   * @param root0
+   * @param root0.disabled
+   * @param root0.placeholder
+   * @param root0.value
+   * @param root0.classList
+   *
+   * @returns {HTMLElement}
+   */
+  _createInput({
+    disabled,
+    placeholder,
+    value,
+    classList,
+  }) {
+    const input = this._createElement({
+      tagName: 'input',
+      classList,
+    });
+
+    if (disabled) {
+      input.setAttribute('disabled', disabled);
+    } else {
+      input.removeAttribute('disabled');
+    }
+    input.setAttribute('placeholder', placeholder);
+    input.setAttribute('value', value);
+
+    return input;
   }
 
   /**
@@ -173,14 +311,16 @@ export default class Embed {
    * @returns {HTMLElement}
    */
   createPreloader() {
-    const preloader = document.createElement('preloader');
-    const url = document.createElement('div');
+    const preloader = this._createElement({
+      tagName: 'preloader',
+      classList: [ this.CSS.preloader ],
+    });
+    const url = this._createElement({
+      tagName: 'div',
+      classList: [ this.CSS.url ],
+    });
 
     url.textContent = this.data.source;
-
-    preloader.classList.add(this.CSS.preloader);
-    url.classList.add(this.CSS.url);
-
     preloader.appendChild(url);
 
     return preloader;
@@ -193,27 +333,6 @@ export default class Embed {
    */
   save() {
     return this.data;
-  }
-
-  /**
-   * Handle pasted url and return Service object
-   *
-   * @param {PasteEvent} event - event with pasted data
-   */
-  onPaste(event) {
-    const { key: service, data: url } = event.detail;
-
-    const { regex, embedUrl, width, height, id = (ids) => ids.shift() } = Embed.services[service];
-    const result = regex.exec(url).slice(1);
-    const embed = embedUrl.replace(/<%= remote_id %>/g, id(result));
-
-    this.data = {
-      service,
-      source: url,
-      embed,
-      width,
-      height,
-    };
   }
 
   /**
@@ -240,14 +359,13 @@ export default class Embed {
       })
       .filter(([key, service]) => Embed.checkServiceConfig(service))
       .map(([key, service]) => {
-        const { regex, embedUrl, html, height, width, id } = service;
+        const { regex, embedUrl, html, style, id } = service;
 
         return [key, {
           regex,
           embedUrl,
           html,
-          height,
-          width,
+          style,
           id,
         } ];
       });
@@ -285,28 +403,16 @@ export default class Embed {
    * @returns {boolean}
    */
   static checkServiceConfig(config) {
-    const { regex, embedUrl, html, height, width, id } = config;
+    const { regex, embedUrl, html, style, id } = config;
 
     let isValid = regex && regex instanceof RegExp &&
       embedUrl && typeof embedUrl === 'string' &&
       html && typeof html === 'string';
 
     isValid = isValid && (id !== undefined ? id instanceof Function : true);
-    isValid = isValid && (height !== undefined ? Number.isFinite(height) : true);
-    isValid = isValid && (width !== undefined ? Number.isFinite(width) : true);
+    isValid = isValid && (style !== undefined ? typeof style === 'object' : true);
 
     return isValid;
-  }
-
-  /**
-   * Paste configuration to enable pasted URLs processing by Editor
-   *
-   * @returns {object} - object of patterns which contain regx for pasteConfig
-   */
-  static get pasteConfig() {
-    return {
-      patterns: Embed.patterns,
-    };
   }
 
   /**
