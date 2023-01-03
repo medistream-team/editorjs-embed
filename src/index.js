@@ -93,6 +93,7 @@ export default class Embed {
 
     this._data = {
       ...data,
+      source: data.source || this.data.source || '',
       caption: data.caption || this.data.caption || '',
     };
 
@@ -107,11 +108,12 @@ export default class Embed {
    * @returns {EmbedData}
    */
   get data() {
-    if (this.element) {
-      const caption = this.element.querySelector('.embed-tool__caption');
+    // if (this.element) {
+    //   const [input, caption] = this.element.querySelectorAll('input');
 
-      this._data.caption = caption ? caption.value : '';
-    }
+    //   this._data.source = input ? input.value : '';
+    //   this._data.caption = caption ? caption.value : '';
+    // }
 
     return this._data;
   }
@@ -131,7 +133,6 @@ export default class Embed {
       caption: 'embed-tool__caption',
       url: 'embed-tool__url',
       content: 'embed-tool__content',
-      error: 'embed-tool__error',
     };
   }
 
@@ -140,18 +141,19 @@ export default class Embed {
    *
    * @returns {HTMLElement}
    */
-  render() {
-    const { source, service, embed, caption: _caption } = this.data;
+  async render() {
+    const { service, source, caption: _caption } = this.data;
 
+    console.log('render!!', this.data);
     const container = this._createElement({
       tagName: 'div',
-      classList: (service && embed) ? [this.CSS.baseClass, this.CSS.container, this.CSS.containerLoading] : [ this.CSS.baseClass ],
+      classList: service ? [this.CSS.baseClass, this.CSS.container, this.CSS.containerLoading] : [ this.CSS.baseClass ],
     });
     const input = this._createInput({
       disabled: this.readOnly,
       value: source || '',
       placeholder: 'https://',
-      classList: !(service && embed) ? [this.CSS.input, this.CSS.error] : [ this.CSS.input ],
+      classList: [ this.CSS.input ],
     });
 
     input.addEventListener('paste', (event) => {
@@ -173,8 +175,11 @@ export default class Embed {
 
     container.appendChild(input);
 
-    if (service && embed) {
-      const { html } = Embed.services[service];
+    if (service && service !== 'embed') {
+      const { html, regex, embedUrl, id = (ids) => ids.shift() } = Embed.services[service];
+      const result = regex.exec(source).slice(1);
+
+      const embed = embedUrl.replace(/<%= remote_id %>/g, id(result));
 
       const preloader = this.createPreloader();
       const template = this._createElement({
@@ -199,6 +204,33 @@ export default class Embed {
       container.appendChild(caption);
     }
 
+    // if (service && service === 'embed') {
+    //   const url = encodeURI(source);
+
+    //   const response = await fetch('https://public-api.medistream.co.kr/og/?url=' + url);
+    //   const { ogTitle } = await response.json();
+
+    //   const preloader = this.createPreloader();
+    //   const template = this._createElement({
+    //     tagName: 'div',
+    //   });
+    //   const caption = this._createInput({
+    //     disabled: this.readOnly,
+    //     value: _caption || '',
+    //     placeholder: 'Enter a caption',
+    //     classList: [this.CSS.input, this.CSS.caption],
+    //   });
+
+    //   template.innerText = ogTitle;
+
+    //   this.embedIsReady(container)
+    //     .then(() => container.classList.remove(this.CSS.containerLoading));
+
+    //   container.appendChild(preloader);
+    //   container.appendChild(template);
+    //   container.appendChild(caption);
+    // }
+
     this.element = container;
 
     return container;
@@ -207,33 +239,33 @@ export default class Embed {
   /**
    *
    */
-  updated() {
-    const [input, caption] = this.element.querySelectorAll('input');
+  // updated() {
+  //   const [input, caption] = this.element.querySelectorAll('input');
 
-    if (input.value && !document.activeElement.contains(caption)) {
-      input.focus();
-      const value = input.value;
+  //   if (input.value && !document.activeElement.contains(caption)) {
+  //     input.focus();
+  //     const value = input.value;
 
-      input.value = '';
-      input.value = value;
-    }
-  }
+  //     input.value = '';
+  //     input.value = value;
+  //   }
+  // }
 
   /**
    * @param url
    */
   _checkedUrl(url) {
-    const _data = {
-      service: '',
-      source: url,
-      embed: '',
-      style: {},
+    let service = '';
+    const patterns = {
+      ...Embed.patterns,
+      // eslint-disable-next-line
+      etc: /(?:(?:http[s]?:\/\/)|(?:www\.))([a-zA-Z0-9\-\._\?\,\'\/\\\+&%\$#\=~:]+)/
     };
 
-    Object.entries(Embed.patterns)
+    Object.entries(patterns)
       .some(([key, value]) => {
-        if (value.test(_data.source)) {
-          _data.service = key;
+        if (value.test(url)) {
+          service = key;
 
           return true;
         }
@@ -241,15 +273,10 @@ export default class Embed {
         return false;
       });
 
-    if (_data.service) {
-      const { regex, embedUrl, style, id = (ids) => ids.shift() } = Embed.services[_data.service];
-      const result = regex.exec(_data.source).slice(1);
-
-      _data.embed = embedUrl.replace(/<%= remote_id %>/g, id(result));
-      _data.style = style;
-    }
-
-    this.data = _data;
+    this.data = {
+      service,
+      source: url,
+    };
   }
 
   /**

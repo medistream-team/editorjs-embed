@@ -175,13 +175,13 @@ export default {
     embedUrl: 'https://miro.com/app/live-embed/<%= remote_id %>',
     html: '<iframe width="700" height="500" style="margin: 0 auto;" allowFullScreen frameBorder="0" scrolling="no"></iframe>',
   },
-  defaultUrl: {
-    regex: /(?:(?:http[s]?:\/\/)|(?:www\.))([a-zA-Z0-9\-\._\?\,\'\/\\\+&%\$#\=~:]+)/,
-    embedUrl: 'https://<%= remote_id %>',
-    html: '<iframe width="100%" height="600" style="margin: 0 auto;" frameborder="0" allowfullscreen=""></iframe>',
-    style: {
-      width: '100%',
-      height: 600,
-    },
-  },
+  // defaultUrl: {
+  //   regex: /(?:(?:http[s]?:\/\/)|(?:www\.))([a-zA-Z0-9\-\._\?\,\'\/\\\+&%\$#\=~:]+)/,
+  //   embedUrl: 'https://<%= remote_id %>',
+  //   html: '<iframe width="100%" height="600" style="margin: 0 auto;" frameborder="0" allowfullscreen=""></iframe>',
+  //   style: {
+  //     width: '100%',
+  //     height: 600,
+  //   },
+  // },
 };
