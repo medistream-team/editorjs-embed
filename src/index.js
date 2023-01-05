@@ -83,7 +83,6 @@ export default class Embed {
    * @param {RegExp} [data.regex] - pattern of source URLs
    * @param {string} [data.embedUrl] - URL scheme to embedded page. Use '<%= remote_id %>' to define a place to insert resource id
    * @param {string} [data.html] - iframe which contains embedded content
-   * @param {object} [data.style] - iframe style
    * @param {string} [data.caption] - caption
    */
   set data(data) {
@@ -93,7 +92,6 @@ export default class Embed {
 
     this._data = {
       ...data,
-      source: data.source || this.data.source || '',
       caption: data.caption || this.data.caption || '',
     };
 
@@ -108,12 +106,11 @@ export default class Embed {
    * @returns {EmbedData}
    */
   get data() {
-    // if (this.element) {
-    //   const [input, caption] = this.element.querySelectorAll('input');
+    if (this.element) {
+      const caption = this.element.querySelector('.embed-tool__caption');
 
-    //   this._data.source = input ? input.value : '';
-    //   this._data.caption = caption ? caption.value : '';
-    // }
+      this._data.caption = caption ? caption.value : '';
+    }
 
     return this._data;
   }
@@ -133,6 +130,8 @@ export default class Embed {
       caption: 'embed-tool__caption',
       url: 'embed-tool__url',
       content: 'embed-tool__content',
+      img: 'embed-tool__img',
+      flex: 'embed-tool__flex',
     };
   }
 
@@ -141,50 +140,32 @@ export default class Embed {
    *
    * @returns {HTMLElement}
    */
-  async render() {
+  render() {
     const { service, source, caption: _caption } = this.data;
 
-    console.log('render!!', this.data);
-    const container = this._createElement({
-      tagName: 'div',
-      classList: service ? [this.CSS.baseClass, this.CSS.container, this.CSS.containerLoading] : [ this.CSS.baseClass ],
-    });
-    const input = this._createInput({
-      disabled: this.readOnly,
-      value: source || '',
-      placeholder: 'https://',
-      classList: [ this.CSS.input ],
-    });
+    const container = service
+      ? this._createElement('div', this.CSS.baseClass, this.CSS.container, this.CSS.containerLoading)
+      : this._createElement('div', this.CSS.baseClass);
 
-    input.addEventListener('paste', (event) => {
+    const form = this._createForm(source);
+
+    form.addEventListener('paste', (event) => {
       const url = (event.clipboardData || window.clipboardData).getData('text');
 
-      if (url) {
-        this._checkedUrl(url);
-      }
-    });
-    input.addEventListener('keydown', (event) => {
-      if (event.keyCode === 13) {
-        const url = event.target.value;
-
-        if (url) {
-          this._checkedUrl(url);
-        }
-      }
+      this._checkedUrl(url);
     });
 
-    container.appendChild(input);
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const url = event.target[0].value;
 
-    if (service && service !== 'embed') {
-      const { html, regex, embedUrl, id = (ids) => ids.shift() } = Embed.services[service];
-      const result = regex.exec(source).slice(1);
+      this._checkedUrl(url);
+    });
 
-      const embed = embedUrl.replace(/<%= remote_id %>/g, id(result));
+    container.appendChild(form);
 
-      const preloader = this.createPreloader();
-      const template = this._createElement({
-        tagName: 'template',
-      });
+    if (service) {
+      const preloader = this.createPreloader(source);
       const caption = this._createInput({
         disabled: this.readOnly,
         value: _caption || '',
@@ -192,44 +173,36 @@ export default class Embed {
         classList: [this.CSS.input, this.CSS.caption],
       });
 
-      template.innerHTML = html;
-      template.content.firstChild.setAttribute('src', embed);
-      template.content.firstChild.classList.add(this.CSS.content);
-
-      this.embedIsReady(container)
-        .then(() => container.classList.remove(this.CSS.containerLoading));
-
       container.appendChild(preloader);
-      container.appendChild(template.content.firstChild);
-      container.appendChild(caption);
+
+      if (service !== 'etc') {
+        const { html, embed } = this._getEmbedData(service, source);
+
+        const template = this._createElement('template');
+
+        template.innerHTML = html;
+        template.content.firstChild.setAttribute('src', embed);
+        template.content.firstChild.classList.add(this.CSS.content);
+
+        this.embedIsReady(container)
+          .then(() => container.classList.remove(this.CSS.containerLoading));
+
+        container.appendChild(template.content.firstChild);
+        container.appendChild(caption);
+      }
+
+      if (service === 'etc') {
+        this._getOgData(source)
+          .then(({ title, description, image, url }) => {
+            const template = this._createOgCard(title, description, image.url, url);
+
+            container.classList.remove(this.CSS.containerLoading);
+
+            container.appendChild(template);
+            container.appendChild(caption);
+          });
+      }
     }
-
-    // if (service && service === 'embed') {
-    //   const url = encodeURI(source);
-
-    //   const response = await fetch('https://public-api.medistream.co.kr/og/?url=' + url);
-    //   const { ogTitle } = await response.json();
-
-    //   const preloader = this.createPreloader();
-    //   const template = this._createElement({
-    //     tagName: 'div',
-    //   });
-    //   const caption = this._createInput({
-    //     disabled: this.readOnly,
-    //     value: _caption || '',
-    //     placeholder: 'Enter a caption',
-    //     classList: [this.CSS.input, this.CSS.caption],
-    //   });
-
-    //   template.innerText = ogTitle;
-
-    //   this.embedIsReady(container)
-    //     .then(() => container.classList.remove(this.CSS.containerLoading));
-
-    //   container.appendChild(preloader);
-    //   container.appendChild(template);
-    //   container.appendChild(caption);
-    // }
 
     this.element = container;
 
@@ -237,29 +210,50 @@ export default class Embed {
   }
 
   /**
-   *
+   * @param service
+   * @param source
    */
-  // updated() {
-  //   const [input, caption] = this.element.querySelectorAll('input');
+  _getEmbedData(service, source) {
+    const { html, regex, embedUrl, id = (ids) => ids.shift() } = Embed.services[service];
+    const result = regex.exec(source).slice(1);
 
-  //   if (input.value && !document.activeElement.contains(caption)) {
-  //     input.focus();
-  //     const value = input.value;
+    const embed = embedUrl.replace(/<%= remote_id %>/g, id(result));
 
-  //     input.value = '';
-  //     input.value = value;
-  //   }
-  // }
+    this.data.embed = embed;
+
+    return {
+      html,
+      embed,
+    };
+  }
+
+  /**
+   * @param source
+   */
+  async _getOgData(source) {
+    const url = encodeURI(source);
+
+    const response = await fetch('https://public-api.medistream.co.kr/og/?url=' + url);
+    const json = await response.json();
+
+    return {
+      title: json.ogTitle || json.twitterTitle,
+      description: json.ogDescription || json.twitterDescription,
+      image: json.ogImage || json.twitterImage,
+      url: json.ogUrl,
+    };
+  }
 
   /**
    * @param url
    */
   _checkedUrl(url) {
     let service = '';
+
     const patterns = {
       ...Embed.patterns,
       // eslint-disable-next-line
-      etc: /(?:(?:http[s]?:\/\/)|(?:www\.))([a-zA-Z0-9\-\._\?\,\'\/\\\+&%\$#\=~:]+)/
+      etc: /(?:http[s]?:\/\/)|(?:www\.)([a-zA-Z0-9\-\._\?\,\'\/\\\+&%\$#\=~:]+)/
     };
 
     Object.entries(patterns)
@@ -280,22 +274,15 @@ export default class Embed {
   }
 
   /**
-   * @param root0
-   * @param root0.tagName
-   * @param root0.classList
-   *
+   * @param tagName
+   * @param {...string} classList
    * @returns {HTMLElement}
    */
-  _createElement({
-    tagName,
-    classList,
-  }) {
+  _createElement(tagName, ...classList) {
     const element = document.createElement(tagName);
 
     if (classList && classList.length > 0) {
-      classList.forEach(list => {
-        element.classList.add(list);
-      });
+      element.classList.add(...classList);
     }
 
     return element;
@@ -314,18 +301,16 @@ export default class Embed {
     disabled,
     placeholder,
     value,
-    classList,
+    classList = [],
   }) {
-    const input = this._createElement({
-      tagName: 'input',
-      classList,
-    });
+    const input = this._createElement('input', ...classList);
 
     if (disabled) {
       input.setAttribute('disabled', disabled);
     } else {
       input.removeAttribute('disabled');
     }
+
     input.setAttribute('placeholder', placeholder);
     input.setAttribute('value', value);
 
@@ -333,24 +318,75 @@ export default class Embed {
   }
 
   /**
-   * Creates preloader to append to container while data is loading
-   *
-   * @returns {HTMLElement}
+   * @param source
    */
-  createPreloader() {
-    const preloader = this._createElement({
-      tagName: 'preloader',
-      classList: [ this.CSS.preloader ],
-    });
-    const url = this._createElement({
-      tagName: 'div',
-      classList: [ this.CSS.url ],
+  _createForm(source) {
+    const form = this._createElement('form', this.CSS.input, this.CSS.flex);
+
+    const input = this._createInput({
+      disabled: this.readOnly,
+      value: source || '',
+      placeholder: 'URL을 입력하세요.',
     });
 
-    url.textContent = this.data.source;
+    const button = this._createElement('button');
+
+    button.innerText = '완료';
+    button.setAttribute('type', 'submit');
+
+    form.appendChild(input);
+    form.appendChild(button);
+
+    return form;
+  }
+
+  /**
+   * Creates preloader to append to container while data is loading
+   *
+   * @param source
+   * @param textContent
+   * @returns {HTMLElement}
+   */
+  createPreloader(textContent) {
+    const preloader = this._createElement('preloader', this.CSS.preloader);
+    const url = this._createElement('div', this.CSS.url);
+
+    url.textContent = textContent;
     preloader.appendChild(url);
 
     return preloader;
+  }
+
+  /**
+   * @param ogTitle
+   * @param ogDescription
+   * @param ogImageUrl
+   * @param ogUrl
+   * @returns {HTMLElement}
+   */
+  _createOgCard(ogTitle, ogDescription, ogImageUrl, ogUrl) {
+    const card = this._createElement('div', this.CSS.content, this.CSS.input, this.CSS.flex);
+    const content = this._createElement('div');
+
+    const title = this._createElement('a');
+    const description = this._createElement('p');
+    const img = this._createElement('img', this.CSS.img);
+
+    title.innerText = ogTitle;
+    title.setAttribute('href', ogUrl);
+    title.setAttribute('target', '_blank');
+
+    description.innerText = ogDescription;
+
+    img.setAttribute('src', ogImageUrl);
+
+    content.appendChild(title);
+    content.appendChild(description);
+
+    card.appendChild(content);
+    card.appendChild(img);
+
+    return card;
   }
 
   /**
@@ -386,13 +422,12 @@ export default class Embed {
       })
       .filter(([key, service]) => Embed.checkServiceConfig(service))
       .map(([key, service]) => {
-        const { regex, embedUrl, html, style, id } = service;
+        const { regex, embedUrl, html, id } = service;
 
         return [key, {
           regex,
           embedUrl,
           html,
-          style,
           id,
         } ];
       });
@@ -430,14 +465,13 @@ export default class Embed {
    * @returns {boolean}
    */
   static checkServiceConfig(config) {
-    const { regex, embedUrl, html, style, id } = config;
+    const { regex, embedUrl, html, id } = config;
 
     let isValid = regex && regex instanceof RegExp &&
       embedUrl && typeof embedUrl === 'string' &&
       html && typeof html === 'string';
 
     isValid = isValid && (id !== undefined ? id instanceof Function : true);
-    isValid = isValid && (style !== undefined ? typeof style === 'object' : true);
 
     return isValid;
   }
