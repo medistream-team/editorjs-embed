@@ -193,8 +193,8 @@ export default class Embed {
 
       if (service === 'etc') {
         this._getOgData(source)
-          .then(({ title, description, image, url }) => {
-            const template = this._createOgCard(title, description, image.url, url);
+          .then(({ title, description, imageUrl, url }) => {
+            const template = this._createOgCard(title, description, imageUrl, url);
 
             container.classList.remove(this.CSS.containerLoading);
 
@@ -234,13 +234,22 @@ export default class Embed {
     const url = encodeURI(source);
 
     const response = await fetch('https://public-api.medistream.co.kr/og/?url=' + url);
-    const json = await response.json();
+    const {
+      ogTitle,
+      ogDescription,
+      ogImage,
+      ogUrl,
+      twitterTitle,
+      twitterDescription,
+      twitterImage,
+      requestUrl
+  } = await response.json();
 
     return {
-      title: json.ogTitle || json.twitterTitle,
-      description: json.ogDescription || json.twitterDescription,
-      image: json.ogImage || json.twitterImage,
-      url: json.ogUrl,
+      title: ogTitle || twitterTitle || '',
+      description: ogDescription || twitterDescription || '',
+      imageUrl: ogImage?.url || twitterImage?.url || '',
+      url: ogUrl || requestUrl || '',
     };
   }
 
