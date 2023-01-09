@@ -200,7 +200,11 @@ export default class Embed {
 
             container.appendChild(template);
             container.appendChild(caption);
-          });
+          })
+          .catch((err) => {
+            const message = preloader.firstChild
+            message.textContent = err
+          })
       }
     }
 
@@ -234,6 +238,11 @@ export default class Embed {
     const url = encodeURI(source);
 
     const response = await fetch('https://public-api.medistream.co.kr/og/?url=' + url);
+
+    if (response.status !== 200) {
+      return Promise.reject('잘못된 URL입니다.')
+    }
+
     const {
       ogTitle,
       ogDescription,
