@@ -252,7 +252,7 @@ export default class Embed {
       twitterDescription,
       twitterImage,
       requestUrl
-  } = await response.json();
+    } = await response.json();
 
     return {
       title: ogTitle || twitterTitle || '',
@@ -323,14 +323,12 @@ export default class Embed {
   }) {
     const input = this._createElement('input', ...classList);
 
-    if (disabled) {
-      input.setAttribute('disabled', disabled);
-    } else {
-      input.removeAttribute('disabled');
-    }
-
     input.setAttribute('placeholder', placeholder);
     input.setAttribute('value', value);
+
+    disabled
+      ? input.setAttribute('disabled', true)
+      : input.removeAttribute('disabled')
 
     return input;
   }
@@ -351,6 +349,10 @@ export default class Embed {
 
     button.innerText = '완료';
     button.setAttribute('type', 'submit');
+
+    this.readOnly
+      ? button.setAttribute('disabled', true)
+      : button.removeAttribute('disabled')
 
     form.appendChild(input);
     form.appendChild(button);
