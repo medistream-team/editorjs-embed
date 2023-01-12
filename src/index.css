@@ -60,7 +60,7 @@
 
   &__caption {
     margin-top: 7px;
-
+    text-align: center;
 
     &[contentEditable=true][data-placeholder]::before{
       position: absolute;
