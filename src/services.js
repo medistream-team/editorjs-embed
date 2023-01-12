@@ -132,7 +132,7 @@ export default {
   twitter: {
     regex: /^https?:\/\/twitter\.com\/(?:#!\/)?(\w+)\/status(?:es)?\/(\d+?.*)?$/,
     embedUrl: 'https://twitframe.com/show?url=https://twitter.com/<%= remote_id %>',
-    html: '<iframe width="600" height="600" style="margin: 0 auto;" frameborder="0" scrolling="no" allowtransparency="true"></iframe>',
+    html: '<iframe width="550" height="600" style="margin: 0 auto;" frameborder="0" scrolling="no" allowtransparency="true"></iframe>',
     id: ids => ids.join('/status/'),
   },
   pinterest: {
@@ -150,6 +150,7 @@ export default {
     id: (ids) => {
       return ids.join('/');
     },
+
   },
   aparat: {
     regex: /(?:http[s]?:\/\/)?(?:www.)?aparat\.com\/v\/([^\/\?\&]+)\/?/,
