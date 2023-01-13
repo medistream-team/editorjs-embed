@@ -144,7 +144,7 @@ export default class Embed {
     const { service, source, caption: _caption } = this.data;
 
     const container = service
-      ? this._createElement('div', this.CSS.baseClass, this.CSS.container, this.CSS.containerLoading)
+      ? this._createElement('div', [this.CSS.baseClass, this.CSS.container, this.CSS.containerLoading])
       : this._createElement('div', this.CSS.baseClass);
 
     const form = this._createForm(source);
@@ -193,8 +193,8 @@ export default class Embed {
 
       if (service === 'etc') {
         this._getOgData(source)
-          .then(({ title, description, imageUrl, url }) => {
-            const template = this._createOgCard(title, description, imageUrl, url);
+          .then(({ title, description, imageUrl, url, icon }) => {
+            const template = this._createOgCard(title, description, imageUrl, url, icon);
 
             container.classList.remove(this.CSS.containerLoading);
 
@@ -251,7 +251,8 @@ export default class Embed {
       twitterTitle,
       twitterDescription,
       twitterImage,
-      requestUrl
+      requestUrl,
+      favicon
     } = await response.json();
 
     return {
@@ -259,6 +260,7 @@ export default class Embed {
       description: ogDescription || twitterDescription || '',
       imageUrl: ogImage?.url || twitterImage?.url || '',
       url: ogUrl || requestUrl || '',
+      icon: favicon || ''
     };
   }
 
@@ -293,14 +295,25 @@ export default class Embed {
 
   /**
    * @param tagName
-   * @param {...string} classList
    * @returns {HTMLElement}
    */
-  _createElement(tagName, ...classList) {
+  _createElement(tagName, classList, attributes) {
     const element = document.createElement(tagName);
 
-    if (classList && classList.length > 0) {
+    if (Array.isArray(classList)) {
       element.classList.add(...classList);
+    }
+    else if (typeof classList === 'string') {
+      element.classList.add(classList);
+    }
+
+    if (attributes) {
+      Object.entries(attributes)
+      .forEach(([key, value]) => {
+        if (!key) return;
+
+        element[key] = value
+      });
     }
 
     return element;
@@ -321,7 +334,7 @@ export default class Embed {
     value,
     classList = [],
   }) {
-    const input = this._createElement('input', ...classList);
+    const input = this._createElement('input', classList);
 
     input.setAttribute('placeholder', placeholder);
     input.setAttribute('value', value);
@@ -337,7 +350,7 @@ export default class Embed {
    * @param source
    */
   _createForm(source) {
-    const form = this._createElement('form', this.CSS.input, this.CSS.flex);
+    const form = this._createElement('form', [this.CSS.input, this.CSS.flex]);
 
     const input = this._createInput({
       disabled: this.readOnly,
@@ -384,27 +397,47 @@ export default class Embed {
    * @param ogUrl
    * @returns {HTMLElement}
    */
-  _createOgCard(ogTitle, ogDescription, ogImageUrl, ogUrl) {
-    const card = this._createElement('div', this.CSS.content, this.CSS.input, this.CSS.flex);
-    const content = this._createElement('div');
+  _createOgCard(ogTitle, ogDescription, ogImageUrl, ogUrl, ogIcon) {
+    const card = this._createElement('div', [], {
+      style: 'display: flex; background-color: var(--ds-surface-raised, white); border-radius: 1.5px; border: 2px solid transparent; -webkit-box-pack: justify; justify-content: space-between; overflow: hidden; box-shadow: var(--ds-shadow-raised, 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px 1px rgba(9, 30, 66, 0.13));'
+    });
 
-    const title = this._createElement('a');
-    const description = this._createElement('p');
-    const img = this._createElement('img', this.CSS.img);
+    const cardContent = this._createElement('div', [], {
+      style: 'padding: 16px'
+    })
 
-    title.innerText = ogTitle;
-    title.setAttribute('href', ogUrl);
-    title.setAttribute('target', '_blank');
+    const cardHeader = this._createElement('a', [], {
+      href: ogUrl,
+      style: 'display: flex; align-item: flex-start;'
+    })
 
-    description.innerText = ogDescription;
+    const title = this._createElement('span', [], {
+      innerText: ogTitle,
+      style: 'font-size: 14px; font-weight: 500; line-height: 20px; display: -webkit-box; overflow: hidden; text-overflow: ellipsis; word-break: break-word; -webkit-line-clamp: 2; -webkit-box-orient: vertical; color: inherit; max-height: 48px;'
+    });
 
-    img.setAttribute('src', ogImageUrl);
+    const icon = icon && this._createElement('img', [], {
+      src: ogIcon,
+      style: 'width: 16px; height: 16px; margin-right: 8px;'
+    })
 
-    content.appendChild(title);
-    content.appendChild(description);
+    const description = this._createElement('span', [], {
+      innerText: ogDescription,
+      style: 'font-size: 12px; line-height: 20px; font-weight: normal; margin-top: 4px; display: -webkit-box; overflow: hidden; text-overflow: ellipsis; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; max-height: 40px; white-space: pre-line;'
+    });
 
-    card.appendChild(content);
-    card.appendChild(img);
+    const image = this._createElement('img', this.CSS.img, {
+      src: ogImageUrl
+    })
+
+    icon && cardHeader.appendChild(icon)
+    cardHeader.appendChild(title)
+
+    cardContent.appendChild(cardHeader)
+    cardContent.appendChild(description)
+
+    card.appendChild(cardContent)
+    card.appendChild(image)
 
     return card;
   }
