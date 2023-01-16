@@ -402,16 +402,22 @@ export default class Embed {
    */
   _createOgCard(ogTitle, ogDescription, ogImageUrl, ogUrl, ogIcon, ogSiteName) {
     const card = this._createElement('div', [], {
-      style: 'display: flex; background-color: var(--ds-surface-raised, white); border-radius: 1.5px; border: 2px solid transparent; -webkit-box-pack: justify; justify-content: space-between; overflow: hidden; box-shadow: var(--ds-shadow-raised, 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px 1px rgba(9, 30, 66, 0.13));'
+      style: 'min-height: 120px; max-height: 120px; display: flex; background-color: var(--ds-surface-raised, white); border-radius: 1.5px; border: 2px solid transparent; -webkit-box-pack: justify; justify-content: space-between; overflow: hidden; box-shadow: var(--ds-shadow-raised, 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px 1px rgba(9, 30, 66, 0.13));'
     });
 
     const cardContent = this._createElement('div', [], {
-      style: 'padding: 16px'
+      style: 'padding: 16px; display: flex; flex-direction: column; justify-content: space-between;'
     })
 
-    const cardHeader = this._createElement('a', [], {
+    const cardWrapper = this._createElement('div')
+
+    const cardSite = this._createElement('div', [], {
+      style: 'display: flex; -webkit-box-align: center; align-items: center; font-size: 12px; white-space: normal;'
+    })
+
+    const cardTitle = this._createElement('a', [], {
       href: ogUrl,
-      style: 'display: flex; align-item: flex-start;'
+      style: 'display: flex; align-item: center;'
     })
 
     const title = this._createElement('span', [], {
@@ -424,9 +430,10 @@ export default class Embed {
       style: 'width: 16px; height: 16px; margin-right: 8px;'
     })
 
-    const cardFooter = this._createElement('div', [], {
-      style: 'margin-top: 20px; display: flex; -webkit-box-align: center; align-items: center; font-size: 12px; white-space: normal;'
-    })
+    const description = this._createElement('span', [], {
+      innerText: ogDescription,
+      style: 'font-size: 12px; line-height: 20px; font-weight: normal; margin-top: 4px; display: -webkit-box; overflow: hidden; text-overflow: ellipsis; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; max-height: 40px; white-space: pre-line;'
+    });
 
     const siteName = this._createElement('span', [], {
       innerText: ogSiteName
@@ -437,30 +444,23 @@ export default class Embed {
       style: 'width: 12px; height: 12px; margin-right: 4px;'
     })
 
-    const description = this._createElement('span', [], {
-      innerText: ogDescription,
-      style: 'font-size: 12px; line-height: 20px; font-weight: normal; margin-top: 4px; display: -webkit-box; overflow: hidden; text-overflow: ellipsis; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; max-height: 40px; white-space: pre-line;'
-    });
-
     const image = this._createElement('img', this.CSS.img, {
       src: ogImageUrl
     })
 
     if (ogIcon) {
-      cardHeader.appendChild(titleIcon)
-      cardHeader.appendChild(title)
-
-      cardFooter.appendChild(siteNameIcon)
-      cardFooter.appendChild(siteName)
-    } else {
-      cardHeader.appendChild(title)
-
-      cardFooter.appendChild(siteName)
+      cardTitle.appendChild(titleIcon)
+      cardSite.appendChild(siteNameIcon)
     }
 
-    cardContent.appendChild(cardHeader)
-    cardContent.appendChild(description)
-    cardContent.appendChild(cardFooter)
+    cardTitle.appendChild(title)
+    cardSite.appendChild(siteName)
+
+    cardWrapper.appendChild(cardTitle)
+    cardWrapper.appendChild(description)
+
+    cardContent.appendChild(cardWrapper)
+    cardContent.appendChild(cardSite)
 
     card.appendChild(cardContent)
     card.appendChild(image)
