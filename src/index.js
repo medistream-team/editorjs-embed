@@ -193,8 +193,8 @@ export default class Embed {
 
       if (service === 'etc') {
         this._getOgData(source)
-          .then(({ title, description, imageUrl, url, icon }) => {
-            const template = this._createOgCard(title, description, imageUrl, url, icon);
+          .then(({ title, description, imageUrl, url, icon, siteName }) => {
+            const template = this._createOgCard(title, description, imageUrl, url, icon, siteName);
 
             container.classList.remove(this.CSS.containerLoading);
 
@@ -248,9 +248,11 @@ export default class Embed {
       ogDescription,
       ogImage,
       ogUrl,
+      ogSiteName,
       twitterTitle,
       twitterDescription,
       twitterImage,
+      twitterSite,
       requestUrl,
       favicon
     } = await response.json();
@@ -260,7 +262,8 @@ export default class Embed {
       description: ogDescription || twitterDescription || '',
       imageUrl: ogImage?.url || twitterImage?.url || '',
       url: ogUrl || requestUrl || '',
-      icon: favicon || ''
+      icon: favicon?.includes('https://') ? favicon :  '',
+      siteName: ogSiteName || twitterSite || ogTitle || twitterTitle || ''
     };
   }
 
@@ -397,7 +400,7 @@ export default class Embed {
    * @param ogUrl
    * @returns {HTMLElement}
    */
-  _createOgCard(ogTitle, ogDescription, ogImageUrl, ogUrl, ogIcon) {
+  _createOgCard(ogTitle, ogDescription, ogImageUrl, ogUrl, ogIcon, ogSiteName) {
     const card = this._createElement('div', [], {
       style: 'display: flex; background-color: var(--ds-surface-raised, white); border-radius: 1.5px; border: 2px solid transparent; -webkit-box-pack: justify; justify-content: space-between; overflow: hidden; box-shadow: var(--ds-shadow-raised, 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px 1px rgba(9, 30, 66, 0.13));'
     });
@@ -416,9 +419,22 @@ export default class Embed {
       style: 'font-size: 14px; font-weight: 500; line-height: 20px; display: -webkit-box; overflow: hidden; text-overflow: ellipsis; word-break: break-word; -webkit-line-clamp: 2; -webkit-box-orient: vertical; color: inherit; max-height: 48px;'
     });
 
-    const icon = icon && this._createElement('img', [], {
+    const titleIcon = this._createElement('img', [], {
       src: ogIcon,
       style: 'width: 16px; height: 16px; margin-right: 8px;'
+    })
+
+    const cardFooter = this._createElement('div', [], {
+      style: 'margin-top: 20px; display: flex; -webkit-box-align: center; align-items: center; font-size: 12px; white-space: normal;'
+    })
+
+    const siteName = this._createElement('span', [], {
+      innerText: ogSiteName
+    })
+
+    const siteNameIcon = this._createElement('img', [], {
+      src: ogIcon,
+      style: 'width: 12px; height: 12px; margin-right: 4px;'
     })
 
     const description = this._createElement('span', [], {
@@ -430,11 +446,21 @@ export default class Embed {
       src: ogImageUrl
     })
 
-    icon && cardHeader.appendChild(icon)
-    cardHeader.appendChild(title)
+    if (ogIcon) {
+      cardHeader.appendChild(titleIcon)
+      cardHeader.appendChild(title)
+
+      cardFooter.appendChild(siteNameIcon)
+      cardFooter.appendChild(siteName)
+    } else {
+      cardHeader.appendChild(title)
+
+      cardFooter.appendChild(siteName)
+    }
 
     cardContent.appendChild(cardHeader)
     cardContent.appendChild(description)
+    cardContent.appendChild(cardFooter)
 
     card.appendChild(cardContent)
     card.appendChild(image)

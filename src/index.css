@@ -81,8 +81,8 @@
   }
 
   &__img {
-    min-width: 104px;
-    max-width: 104px;
+    min-width: 160px;
+    max-width: 160px;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: 50% 50%;
