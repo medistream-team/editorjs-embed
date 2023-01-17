@@ -81,8 +81,6 @@
   }
 
   &__reset {
-    padding: 4px;
-
     border: none;
     outline: none;
     background: none;
@@ -99,6 +97,7 @@
 
   &__text {
     display: -webkit-box;
+    line-height: 20px;
     overflow: hidden;
     text-overflow: ellipsis;
     -webkit-line-clamp: 2;

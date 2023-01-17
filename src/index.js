@@ -377,28 +377,23 @@ export default class Embed {
    * @returns {HTMLElement}
    */
   _createOgCard(ogTitle, ogDescription, ogImageUrl, ogUrl, ogIcon, ogSiteName) {
-    const card = this._createElement('div', [], {
-      style: 'min-height: 120px; max-height: 120px; display: flex; background-color: var(--ds-surface-raised, white); border-radius: 1.5px; border: 2px solid transparent; -webkit-box-pack: justify; justify-content: space-between; overflow: hidden; box-shadow: var(--ds-shadow-raised, 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px 1px rgba(9, 30, 66, 0.13));'
+    const card = this._createElement('a', [], {
+      style: 'display: flex; justify-content: space-between; text-decoration: none; min-height: 120px; max-height: 120px; box-shadow: var(--ds-shadow-raised, 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px 1px rgba(9, 30, 66, 0.13));'
     });
 
-    const cardContent = this._createElement('div', [], {
-      style: 'padding: 16px; display: flex; flex-direction: column; justify-content: space-between;'
+    const cardContent = this._createElement('div', [this.CSS.flex_column], {
+      style: 'padding: 16px;'
     })
 
     const cardWrapper = this._createElement('div')
 
-    const cardSite = this._createElement('div', [], {
-      style: 'display: flex; -webkit-box-align: center; align-items: center; font-size: 12px; white-space: normal;'
-    })
-
-    const cardTitle = this._createElement('a', [], {
+    const cardTitle = this._createElement('div', [this.CSS.flex_row], {
       href: ogUrl,
-      style: 'display: flex; align-item: center;'
     })
 
     const title = this._createElement('span', [], {
       innerText: ogTitle,
-      style: 'font-size: 14px; font-weight: 500; line-height: 20px; display: -webkit-box; overflow: hidden; text-overflow: ellipsis; word-break: break-word; -webkit-line-clamp: 2; -webkit-box-orient: vertical; color: inherit; max-height: 48px;'
+      style: 'font-size: 14px;'
     });
 
     const titleIcon = this._createElement('img', [], {
@@ -406,10 +401,14 @@ export default class Embed {
       style: 'width: 16px; height: 16px; margin-right: 8px;'
     })
 
-    const description = this._createElement('span', [], {
+    const description = this._createElement('span', [this.CSS.text], {
       innerText: ogDescription,
-      style: 'font-size: 12px; line-height: 20px; font-weight: normal; margin-top: 4px; display: -webkit-box; overflow: hidden; text-overflow: ellipsis; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; max-height: 40px; white-space: pre-line;'
+      style: 'font-size: 12px; margin-top: 4px;'
     });
+
+    const cardSite = this._createElement('div', [this.CSS.flex_row], {
+      style: 'font-size: 12px; white-space: normal;'
+    })
 
     const siteName = this._createElement('span', [], {
       innerText: ogSiteName
