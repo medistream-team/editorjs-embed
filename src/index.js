@@ -131,7 +131,11 @@ export default class Embed {
       url: 'embed-tool__url',
       content: 'embed-tool__content',
       img: 'embed-tool__img',
-      flex: 'embed-tool__flex',
+
+      reset: 'embed-tool__reset',
+      text: 'embed-tool__text',
+      flex_row: 'embed-tool__flex_row',
+      flex_column: 'embed-tool__flex_column',
     };
   }
 
@@ -166,11 +170,10 @@ export default class Embed {
 
     if (service) {
       const preloader = this.createPreloader(source);
-      const caption = this._createInput({
+      const caption = this._createElement('input', [this.CSS.input, this.CSS.caption], {
         disabled: this.readOnly,
         value: _caption || '',
         placeholder: 'Enter a caption',
-        classList: [this.CSS.input, this.CSS.caption],
       });
 
       container.appendChild(preloader);
@@ -305,8 +308,7 @@ export default class Embed {
 
     if (Array.isArray(classList)) {
       element.classList.add(...classList);
-    }
-    else if (typeof classList === 'string') {
+    } else if (typeof classList === 'string') {
       element.classList.add(classList);
     }
 
@@ -323,52 +325,25 @@ export default class Embed {
   }
 
   /**
-   * @param root0
-   * @param root0.disabled
-   * @param root0.placeholder
-   * @param root0.value
-   * @param root0.classList
-   *
-   * @returns {HTMLElement}
-   */
-  _createInput({
-    disabled,
-    placeholder,
-    value,
-    classList = [],
-  }) {
-    const input = this._createElement('input', classList);
-
-    input.setAttribute('placeholder', placeholder);
-    input.setAttribute('value', value);
-
-    disabled
-      ? input.setAttribute('disabled', true)
-      : input.removeAttribute('disabled')
-
-    return input;
-  }
-
-  /**
    * @param source
    */
   _createForm(source) {
-    const form = this._createElement('form', [this.CSS.input, this.CSS.flex]);
+    const form = this._createElement('form', [this.CSS.input, this.CSS.flex_row], {
+      style: 'margin-bottom: 7px;'
+    });
 
-    const input = this._createInput({
+    const input = this._createElement('input', this.CSS.reset, {
       disabled: this.readOnly,
       value: source || '',
       placeholder: 'URL을 입력하세요.',
+      style: 'width: 100%;'
     });
 
-    const button = this._createElement('button');
-
-    button.innerText = '완료';
-    button.setAttribute('type', 'submit');
-
-    this.readOnly
-      ? button.setAttribute('disabled', true)
-      : button.removeAttribute('disabled')
+    const button = this._createElement('button', this.CSS.reset, {
+      disabled: this.readOnly,
+      type: 'submit',
+      innerHTML: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="18px" height="18px" style="vertical-align: middle;"><path d="M463.5 224H472c13.3 0 24-10.7 24-24V72c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L413.4 96.6c-87.6-86.5-228.7-86.2-315.8 1c-87.5 87.5-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3c62.2-62.2 162.7-62.5 225.3-1L327 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8H463.5z"/></svg>'
+    });
 
     form.appendChild(input);
     form.appendChild(button);
@@ -385,9 +360,10 @@ export default class Embed {
    */
   createPreloader(textContent) {
     const preloader = this._createElement('preloader', this.CSS.preloader);
-    const url = this._createElement('div', this.CSS.url);
+    const url = this._createElement('div', this.CSS.url, {
+      textContent
+    });
 
-    url.textContent = textContent;
     preloader.appendChild(url);
 
     return preloader;
