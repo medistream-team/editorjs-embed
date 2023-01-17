@@ -378,7 +378,7 @@ export default class Embed {
    */
   _createOgCard(ogTitle, ogDescription, ogImageUrl, ogUrl, ogIcon, ogSiteName) {
     const card = this._createElement('a', [], {
-      style: 'display: flex; justify-content: space-between; text-decoration: none; min-height: 120px; max-height: 120px; box-shadow: var(--ds-shadow-raised, 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px 1px rgba(9, 30, 66, 0.13));'
+      style: 'display: flex; justify-content: space-between; text-decoration: none; min-height: 120px; box-shadow: var(--ds-shadow-raised, 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px 1px rgba(9, 30, 66, 0.13));'
     });
 
     const cardContent = this._createElement('div', [this.CSS.flex_column], {
