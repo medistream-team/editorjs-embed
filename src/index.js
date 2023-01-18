@@ -423,8 +423,8 @@ export default class Embed {
       style: 'width: 12px; height: 12px; margin-right: 4px;'
     })
 
-    const image = this._createElement('img', this.CSS.img, {
-      src: ogImageUrl
+    const image = this._createElement('div', this.CSS.img, {
+      style: `background-image: url(${ogImageUrl})`
     })
 
     if (ogIcon) {
