@@ -81,10 +81,24 @@
   }
 
   &__reset {
+    padding: 0;
+
     border: none;
     outline: none;
     background: none;
     box-sizing: border-box;
+  }
+
+  &__card {
+    min-height: 120px;
+    max-height: 120px;
+    display: flex;
+    justify-content: space-between;
+    box-shadow: var(--ds-shadow-raised, 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px 1px rgba(9, 30, 66, 0.13));
+
+    &:hover {
+      background-color: #F4F5F7;
+    }
   }
 
   &__img {
@@ -106,6 +120,21 @@
     white-space: pre-line;
   }
 
+
+  &__icon_btn {
+    padding: 2px;
+    cursor: pointer;
+    border-radius: 7px;
+
+    &:hover {
+      background-color: #F4F5F7;
+    }
+
+    svg {
+      vertical-align: middle;
+    }
+  }
+
   &__flex_row {
     display: flex;
     align-items: center;
@@ -117,10 +146,12 @@
     justify-content: space-between;
   }
 
-  &__resets {
-    background: none;
-    border: none;
-    outline: none;
+  &__hov_underline {
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 

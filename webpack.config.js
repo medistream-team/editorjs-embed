@@ -9,7 +9,7 @@ module.exports = {
           {
             loader: 'babel-loader',
           },
-        ]
+        ],
       },
       {
         test: /\.css$/,
@@ -21,13 +21,17 @@ module.exports = {
             options: {
               plugins: [
                 require('postcss-nested-ancestors'),
-                require('postcss-nested')
-              ]
-            }
-          }
-        ]
-      }
-    ]
+                require('postcss-nested'),
+              ],
+            },
+          },
+        ],
+      },
+      {
+        test: /\.svg$/,
+        loader: 'svg-inline-loader?removeSVGTagAttrs=false',
+      },
+    ],
   },
   output: {
     path: __dirname + '/dist',
@@ -35,6 +39,6 @@ module.exports = {
     filename: 'bundle.js',
     library: 'Embed',
     libraryTarget: 'umd',
-    libraryExport: 'default'
-  }
+    libraryExport: 'default',
+  },
 };

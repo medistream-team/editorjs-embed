@@ -2,6 +2,7 @@ import SERVICES from './services';
 import './index.css';
 import { debounce } from 'debounce';
 
+import refreshIcon from '../asset/refresh.svg'
 /**
  * @typedef {object} EmbedData
  * @description Embed Tool data
@@ -130,12 +131,15 @@ export default class Embed {
       caption: 'embed-tool__caption',
       url: 'embed-tool__url',
       content: 'embed-tool__content',
-      img: 'embed-tool__img',
 
       reset: 'embed-tool__reset',
+      img: 'embed-tool__img',
       text: 'embed-tool__text',
+      card: 'embed-tool__card',
+      icon_btn: 'embed-tool__icon_btn',
       flex_row: 'embed-tool__flex_row',
       flex_column: 'embed-tool__flex_column',
+      hov_underline: 'embed-tool__hov_underline'
     };
   }
 
@@ -339,10 +343,10 @@ export default class Embed {
       style: 'width: 100%;'
     });
 
-    const button = this._createElement('button', this.CSS.reset, {
+    const button = this._createElement('button', [this.CSS.reset, this.CSS.icon_btn], {
       disabled: this.readOnly,
       type: 'submit',
-      innerHTML: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="18px" height="18px" style="vertical-align: middle;"><path d="M463.5 224H472c13.3 0 24-10.7 24-24V72c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L413.4 96.6c-87.6-86.5-228.7-86.2-315.8 1c-87.5 87.5-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3c62.2-62.2 162.7-62.5 225.3-1L327 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8H463.5z"/></svg>'
+      innerHTML: refreshIcon
     });
 
     form.appendChild(input);
@@ -377,8 +381,8 @@ export default class Embed {
    * @returns {HTMLElement}
    */
   _createOgCard(ogTitle, ogDescription, ogImageUrl, ogUrl, ogIcon, ogSiteName) {
-    const card = this._createElement('a', [], {
-      style: 'display: flex; justify-content: space-between; text-decoration: none; min-height: 120px; box-shadow: var(--ds-shadow-raised, 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px 1px rgba(9, 30, 66, 0.13));'
+    const card = this._createElement('a', this.CSS.card, {
+      style: 'text-decoration: none;'
     });
 
     const cardContent = this._createElement('div', [this.CSS.flex_column], {
@@ -391,9 +395,9 @@ export default class Embed {
       href: ogUrl,
     })
 
-    const title = this._createElement('span', [], {
+    const title = this._createElement('span', [this.CSS.text, this.CSS.hov_underline], {
       innerText: ogTitle,
-      style: 'font-size: 14px;'
+      style: 'font-size: 14px; -webkit-line-clamp: 1;'
     });
 
     const titleIcon = this._createElement('img', [], {
