@@ -177,7 +177,7 @@ export default class Embed {
       const caption = this._createElement('input', [this.CSS.input, this.CSS.caption], {
         disabled: this.readOnly,
         value: _caption || '',
-        placeholder: 'Enter a caption',
+        placeholder: '설명을 입력하세요.',
       });
 
       container.appendChild(preloader);

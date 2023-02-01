@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet">
+</head>
+<body>
+    <div id="editorjs"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest"></script>
+    <script src="dist/bundle.js"></script>
+    <script type="module">
+
+        var editor = new EditorJS({
+
+            tools: {
+                embed: {
+                class: Embed,
+                config: {
+                    services: {
+                    youtube: true,
+                    coub: true,
+                    vimeo: true,
+                    facebook: true,
+                    instagram: true
+                }
+                },
+                },
+            },
+            readonly: true,
+            // data: JSON.parse(localStorage.getItem('content')),
+            async onChange(api) {
+                const content = await api.saver.save()
+                // localStorage.setItem('content', JSON.stringify(content))
+                console.log(content)
+            },
+
+        });
+    </script>
+</body>
+</html>
