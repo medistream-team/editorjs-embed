@@ -155,34 +155,31 @@ export default class Embed {
       ? this._createElement('div', [this.CSS.baseClass, this.CSS.container, this.CSS.containerLoading])
       : this._createElement('div', this.CSS.baseClass);
 
+    // form
     const form = this._createForm(source);
 
-    form.addEventListener('paste', (event) => {
-      const url = (event.clipboardData || window.clipboardData).getData('text');
-
-      this._checkedUrl(url);
-    });
-
-    form.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const url = event.target[0].value;
-
-      this._checkedUrl(url);
-    });
+    form.addEventListener('paste', this._onPasteEvent);
+    form.addEventListener('submit', this._onSubmitEvent);
 
     container.appendChild(form);
 
-    if (service) {
-      const preloader = this.createPreloader(source);
-      const caption = this._createElement('input', [this.CSS.input, this.CSS.caption], {
+    if (!service) {
+        this.element = container
+        return container
+    }
+
+    // preloader and caption
+    const preloader = this.createPreloader(source);
+    const caption = this._createElement('input', [this.CSS.input, this.CSS.caption], {
         disabled: this.readOnly,
         value: _caption || '',
         placeholder: '설명을 입력하세요.',
-      });
+    });
 
-      container.appendChild(preloader);
+    container.appendChild(preloader)
 
-      if (service !== 'etc') {
+    // embed
+    if (service !== 'etc') {
         const { html, embed } = this._getEmbedData(service, source);
 
         const template = this._createElement('template');
@@ -196,12 +193,13 @@ export default class Embed {
 
         container.appendChild(template.content.firstChild);
         container.appendChild(caption);
-      }
+    }
 
-      if (service === 'etc') {
+    // card
+    if (service === 'etc') {
         this._getOgData(source)
-          .then(({ title, description, imageUrl, url, icon, siteName }) => {
-            const template = this._createOgCard(title, description, imageUrl, url, icon, siteName);
+          .then((response) => {
+            const template = this._createOgCard(response);
 
             container.classList.remove(this.CSS.containerLoading);
 
@@ -212,7 +210,6 @@ export default class Embed {
             const message = preloader.firstChild
             message.textContent = err
           })
-      }
     }
 
     this.element = container;
@@ -243,7 +240,6 @@ export default class Embed {
    */
   async _getOgData(source) {
     const url = encodeURI(source);
-
     const response = await fetch('https://public-api.medistream.co.kr/og/?url=' + url);
 
     if (response.status !== 200) {
@@ -265,12 +261,12 @@ export default class Embed {
     } = await response.json();
 
     return {
-      title: ogTitle || twitterTitle || '',
-      description: ogDescription || twitterDescription || '',
-      imageUrl: ogImage?.url || twitterImage?.url || '',
-      url: ogUrl || requestUrl || '',
-      icon: favicon?.includes('https://') ? favicon :  '',
-      siteName: ogSiteName || twitterSite || ogTitle || twitterTitle || ''
+      ogTitle: ogTitle || twitterTitle || '',
+      ogDescription: ogDescription || twitterDescription || '',
+      ogImageUrl: ogImage?.url || twitterImage?.url || '',
+      ogUrl: ogUrl || requestUrl || '',
+      ogIcon: favicon?.includes('https://') ? favicon :  '',
+      ogSiteName: ogSiteName || twitterSite || ogTitle || twitterTitle || ''
     };
   }
 
@@ -355,6 +351,18 @@ export default class Embed {
     return form;
   }
 
+  _onPasteEvent = (event) => {
+    const url = (event.clipboardData || window.clipboardData).getData('text');
+    this._checkedUrl(url);
+  }
+
+  _onSubmitEvent = (event) => {
+    event.preventDefault();
+
+    const url = event.target[0].value;
+    this._checkedUrl(url);
+  }
+
   /**
    * Creates preloader to append to container while data is loading
    *
@@ -380,7 +388,7 @@ export default class Embed {
    * @param ogUrl
    * @returns {HTMLElement}
    */
-  _createOgCard(ogTitle, ogDescription, ogImageUrl, ogUrl, ogIcon, ogSiteName) {
+  _createOgCard({ ogTitle, ogDescription, ogImageUrl, ogUrl, ogIcon, ogSiteName }) {
     const card = this._createElement('a', this.CSS.card, {
       style: 'text-decoration: none;'
     });
