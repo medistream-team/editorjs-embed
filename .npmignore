@@ -1,7 +1,10 @@
 .idea/
 docs/
+dev/
 src/
 test/
 .babelrc
+.eslintrc
 webpack.config.js
 yarn.lock
+test.html

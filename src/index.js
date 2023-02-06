@@ -2,7 +2,7 @@ import SERVICES from './services';
 import './index.css';
 import { debounce } from 'debounce';
 
-import refreshIcon from '../asset/refresh.svg'
+import refreshIcon from './img/refresh.svg'
 /**
  * @typedef {object} EmbedData
  * @description Embed Tool data
