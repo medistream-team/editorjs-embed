@@ -153,7 +153,7 @@ export default class Embed {
 
     const container = service
       ? this._createElement('div', [this.CSS.baseClass, this.CSS.container, this.CSS.containerLoading])
-      : this._createElement('div', this.CSS.baseClass);
+      : this._createElement('div', [this.CSS.baseClass, this.CSS.container]);
 
     // form
     const form = this._createForm(source);
