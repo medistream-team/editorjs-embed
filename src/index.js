@@ -132,11 +132,11 @@ export default class Embed {
       url: 'embed-tool__url',
       content: 'embed-tool__content',
 
-      reset: 'embed-tool__reset',
+      form: 'embed-tool__form',
       img: 'embed-tool__img',
       text: 'embed-tool__text',
       card: 'embed-tool__card',
-      icon_btn: 'embed-tool__icon_btn',
+      refreshBtn: 'embed-tool__refresh-btn',
       flex_row: 'embed-tool__flex_row',
       flex_column: 'embed-tool__flex_column',
       hov_underline: 'embed-tool__hov_underline'
@@ -328,18 +328,16 @@ export default class Embed {
    * @param source
    */
   _createForm(source) {
-    const form = this._createElement('form', [this.CSS.input, this.CSS.flex_row], {
-      style: 'margin-bottom: 7px;'
-    });
+    const form = this._createElement('form', this.CSS.form);
 
-    const input = this._createElement('input', this.CSS.reset, {
+    const input = this._createElement('input', this.CSS.input, {
       disabled: this.readOnly,
       value: source || '',
-      placeholder: 'URL을 입력하세요.',
-      style: 'width: 100%;'
+      placeholder: 'URL 을 입력하세요.',
+      style: 'border: 1px solid #E1E4EC; background-color: #F1F3F8;'
     });
 
-    const button = this._createElement('button', [this.CSS.reset, this.CSS.icon_btn], {
+    const button = this._createElement('button', [this.CSS.refreshBtn], {
       disabled: this.readOnly,
       type: 'submit',
       innerHTML: refreshIcon

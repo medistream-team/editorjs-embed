@@ -80,13 +80,8 @@
     }
   }
 
-  &__reset {
-    padding: 0;
-
-    border: none;
-    outline: none;
-    background: none;
-    box-sizing: border-box;
+  &__form {
+    position: relative;
   }
 
   &__card {
@@ -121,17 +116,25 @@
   }
 
 
-  &__icon_btn {
-    padding: 2px;
+  &__refresh-btn {
+    opacity: 0.5;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 100%;
+    border: none;
+    background: none;
     cursor: pointer;
-    border-radius: 7px;
-
     &:hover {
-      background-color: #F4F5F7;
+      opacity: 1;
     }
-
     svg {
       vertical-align: middle;
+      path {
+        stroke: transparent;
+        fill: #515257;
+      }
     }
   }
 
